@@ -8,8 +8,8 @@ namespace AuthProject.Pages
 {
     public class AuthenticateModel : PageModel
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Email { get; set; } = Consts.Email;
+        public string Password { get; set; } = Consts.Password;
 
         [BindProperty]
         public string ReturnUrl { get; set; }
@@ -27,7 +27,7 @@ namespace AuthProject.Pages
             // Authenticate user
             if (email != Consts.Email || password != Consts.Password)
             {
-                AuthStatus = "Not authenticated!";
+                AuthStatus = "Authentication failed!";
                 return Page();
             }
 
@@ -37,20 +37,19 @@ namespace AuthProject.Pages
             };
 
             var principal = new ClaimsPrincipal(
-            new List<ClaimsIdentity> 
-            {
-                new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
-            });
+                 new List<ClaimsIdentity>
+                 {
+                    new(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+                 });
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             
-            if(!String.IsNullOrEmpty(ReturnUrl))
+            if(!string.IsNullOrEmpty(ReturnUrl))
             {
                 return Redirect(ReturnUrl);
             }
 
-            AuthStatus = "Authenticated";
-
+            AuthStatus = "Authenticated!";
             return Page();
         }
     }

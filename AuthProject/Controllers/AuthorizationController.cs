@@ -19,17 +19,17 @@ namespace AuthProject.Controllers
     {
         private readonly IOpenIddictApplicationManager _applicationManager;
         private readonly IOpenIddictScopeManager _scopeManager;
-        private readonly IOpenIddictAuthorizationManager _authorizationManager;
-        private readonly AuthorizationService _authService;
+        //private readonly IOpenIddictAuthorizationManager _authorizationManager;
+        private readonly AuthorizationService _authorizationService;
 
         public AuthorizationController(
             IOpenIddictApplicationManager applicationManager,
             IOpenIddictScopeManager scopeManager,
-            AuthorizationService authService)
+            AuthorizationService authorizationService)
         {
             _applicationManager = applicationManager;
             _scopeManager = scopeManager;
-            _authService = authService;
+            _authorizationService = authorizationService;
         }
 
         [HttpGet("~/connect/authorize")]
@@ -42,11 +42,30 @@ namespace AuthProject.Controllers
             //// Retrieve the profile of the logged in user.
             //var user = await _userManager.GetUserAsync(result.Principal) ??
             //    throw new InvalidOperationException("The user details cannot be retrieved.");
+            
+            var parameters = _authorizationService.ParseParams(HttpContext, new List<string> { Parameters.Prompt });
+
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var isAuthenticated = _authorizationService.IsAuthenticated(result, request);
+
+            if (!isAuthenticated)
+            {
+                return Challenge(
+                    properties: new AuthenticationProperties
+                    {
+                        RedirectUri = _authorizationService.BuildRedirectUrl(HttpContext.Request, parameters)
+                    },
+                    authenticationSchemes: CookieAuthenticationDefaults.AuthenticationScheme
+                );
+            }
 
             var application = await _applicationManager.FindByClientIdAsync(request.ClientId) ??
-                              throw new InvalidOperationException("Details concerning the calling client application cannot be found.");
+                              throw new InvalidOperationException("Details regarding to the calling client application cannot be found.");
 
-            if (await _applicationManager.GetConsentTypeAsync(application) != ConsentTypes.Explicit)
+            var consentType = await _applicationManager.GetConsentTypeAsync(application);
+
+            if (consentType != ConsentTypes.Explicit)
             {
                 return Forbid(
                     authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
@@ -58,38 +77,15 @@ namespace AuthProject.Controllers
                     }));
             }
 
-            var parameters = _authService.ParseParams(HttpContext);//, new List<string> { Parameters.Prompt });
-
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-            if (!_authService.IsAuthenticated(result, request))
-            {
-                return Challenge(properties: new AuthenticationProperties
-                {
-                    RedirectUri = _authService.BuildRedirectUrl(HttpContext.Request, parameters)
-                }, new[] { CookieAuthenticationDefaults.AuthenticationScheme });
-            }
-
-            if (request.HasPrompt(Prompts.Login))
-            {
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-                return Challenge(properties: new AuthenticationProperties
-                {
-                    RedirectUri = _authService.BuildRedirectUrl(HttpContext.Request, parameters)
-                }, new[] { CookieAuthenticationDefaults.AuthenticationScheme });
-            }
-
-            // If the client denies access to the resource owner's data
             var consentClaim = result.Principal.GetClaim(Consts.ConsentNaming);
 
-            // it might be extended in a way that consent claim will contain list of allowed client ids.
-            if (consentClaim != Consts.GrantAccessValue || request.HasPrompt(Prompts.Consent))
+            // If the resource owner hasn't granted access to the resource owner's data, or for any reason we should re-ask for access permission
+            if (consentClaim != Consts.GrantAccessValue)// || request.HasPrompt(Prompts.Consent))
             {
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-                var returnUrl = HttpUtility.UrlEncode(_authService.BuildRedirectUrl(HttpContext.Request, parameters));
-                var consentRedirectUrl = $"/Consent?returnUrl={returnUrl}";
+                var returnUrl = HttpUtility.UrlEncode(_authorizationService.BuildRedirectUrl(HttpContext.Request, parameters));
+                var consentRedirectUrl = $"/Consent?ReturnUrl={returnUrl}";
 
                 return Redirect(consentRedirectUrl);
             }
@@ -98,7 +94,7 @@ namespace AuthProject.Controllers
             
             var userId = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
 
-            // Logging could happen here to through RabbitMQ?
+            // Logging could happen here too through RabbitMQ?
             // Create the claims-based indentity that will be used by OpenIddict to generate tokens.
             var identity = new ClaimsIdentity(
                 authenticationType: TokenValidationParameters.DefaultAuthenticationType,
@@ -159,41 +155,42 @@ namespace AuthProject.Controllers
             return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
 
-        [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
-        [HttpGet("~/connect/userinfo"), HttpPost("~/connect/userinfo")]
-        public async Task<IActionResult> Userinfo()
-        {
-            if (User.GetClaim(Claims.Subject) != Consts.Email)
-            {
-                return Challenge(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(new Dictionary<string, string?>
-                    {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidToken,
-                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                            "The specified access token is bound to an account that no longer exists."
-                    }));
-            }
+        //[Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+        //[HttpGet("~/connect/userinfo"), HttpPost("~/connect/userinfo")]
+        //public async Task<IActionResult> Userinfo()
+        //{
+        //    if (User.GetClaim(Claims.Subject) != Consts.Email)
+        //    {
+        //        return Challenge(
+        //            authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+        //            properties: new AuthenticationProperties(new Dictionary<string, string?>
+        //            {
+        //                [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidToken,
+        //                [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+        //                    "The specified access token is bound to an account that no longer exists."
+        //            }));
+        //    }
 
-            var claims = new Dictionary<string, object>(StringComparer.Ordinal)
-            {
-                // Note: the "sub" claim is a mandatory claim and must be included in the JSON response.
-                [Claims.Subject] = Consts.Email
-            };
+        //    var claims = new Dictionary<string, object>(StringComparer.Ordinal)
+        //    {
+        //        // Note: the "sub" claim is a mandatory claim and must be included in the JSON response.
+        //        [Claims.Subject] = Consts.Email
+        //    };
 
-            if (User.HasScope(Scopes.Email))
-            {
-                claims[Claims.Email] = Consts.Email;
-            }
+        //    if (User.HasScope(Scopes.Email))
+        //    {
+        //        claims[Claims.Email] = Consts.Email;
+        //    }
 
-            return Ok(claims);
-        }
+        //    return Ok(claims);
+        //}
 
         [HttpPost("~/connect/logout")]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
+            
             return SignOut(
                 authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                 properties: new AuthenticationProperties

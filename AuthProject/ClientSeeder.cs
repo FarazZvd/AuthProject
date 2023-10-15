@@ -60,11 +60,11 @@ namespace AuthProject
                 DisplayName = "Swagger client application",
                 RedirectUris =
                 {
-                    new Uri("https://localhost:7777/swagger/oauth2-redirect.html")
+                    new Uri("https://localhost:7003/swagger/oauth2-redirect.html")
                 },
                 PostLogoutRedirectUris =
                 {
-                    new Uri("https://localhost:7777/resources")
+                    new Uri("https://localhost:7003/resources")
                 },
                 Permissions =
                 {

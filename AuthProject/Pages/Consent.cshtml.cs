@@ -7,11 +7,10 @@ using OpenIddict.Abstractions;
 
 namespace AuthProject.Pages
 {
-    [Authorize(CookieAuthenticationDefaults.AuthenticationScheme)]
-    public class ConfirmModel : PageModel
+    public class ConsentModel : PageModel
     {
         [BindProperty]
-        public string ReturnUrl { get; set; }
+        public string? ReturnUrl { get; set; }
         public IActionResult OnGet(string returnUrl)
         {
             ReturnUrl = returnUrl;

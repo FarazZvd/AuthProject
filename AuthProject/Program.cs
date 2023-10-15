@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using AuthProject;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Tokens;
+using static OpenIddict.Abstractions.OpenIddictConstants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,11 +39,16 @@ builder.Services.AddOpenIddict()
         options.SetAuthorizationEndpointUris("connect/authorize");
         options.SetLogoutEndpointUris("connect/logout");
 
+        options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
+
         // Enable the client credentials flow.
         options.AllowClientCredentialsFlow();
         // Enable the authorization code flow.
         options.AllowAuthorizationCodeFlow();
 
+        options.AddEncryptionKey(new SymmetricSecurityKey(
+            Convert.FromBase64String("DRjd/GnduI3Efzen9V9BvbNUfc/VKgXltV7Kbk9sMkY=")));
+        
         // Register the signing and encryption credentials.
         options.AddDevelopmentEncryptionCertificate()
                .AddDevelopmentSigningCertificate();
@@ -65,10 +72,30 @@ builder.Services.AddOpenIddict()
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
+    .AddCookie(c =>
+    {
+        c.LoginPath = "/Authenticate";
+    });
+
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 
 builder.Services.AddTransient<ClientSeeder>();
 builder.Services.AddTransient<AuthorizationService>();
+
+builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("https://localhost:7777")
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -86,6 +113,14 @@ using (var scope = app.Services.CreateScope())
         // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
     }
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

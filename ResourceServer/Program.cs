@@ -12,7 +12,7 @@ builder.Services.AddOpenIddict()
     {
         // Note: the validation handler uses OpenID Connect discovery
         // to retrieve the issuer signing keys used to validate tokens.
-        options.SetIssuer("https://localhost:6666/");
+        options.SetIssuer("https://localhost:7127");
         options.AddAudiences("resource_server");
 
         // Register the encryption credentials. This sample uses a symmetric
@@ -46,8 +46,8 @@ builder.Services.AddSwaggerGen(a =>
         {
             AuthorizationCode = new OpenApiOAuthFlow
             {
-                AuthorizationUrl = new Uri("https://localhost:6666/connect/authorize"),
-                TokenUrl = new Uri("https://localhost:6666/connect/token"),
+                AuthorizationUrl = new Uri("https://localhost:7127/connect/authorize"),
+                TokenUrl = new Uri("https://localhost:7127/connect/token"),
                 Scopes = new Dictionary<string, string>
                 {
                     { "myApiScope", "resource server scope" }

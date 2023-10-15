@@ -9,15 +9,16 @@ namespace AuthProject
 {
     public class AuthorizationService
     {
-        public IDictionary<string, StringValues> ParseParams(HttpContext httpContext)
-        {
-            //Parameter exclusion could be handled here, but not necessaey now!
-            var parameters = httpContext.Request.HasFormContentType ?
-                httpContext.Request.Form.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) :
-                httpContext.Request.Query.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        public IDictionary<string, StringValues> ParseParams(HttpContext httpContext, List<string>? excluding = null)
+    {
+        excluding ??= new List<string>();
 
-            return parameters;
-        }
+        var parameters = httpContext.Request.HasFormContentType ?
+                httpContext.Request.Form.Where(v => !excluding.Contains(v.Key)).ToDictionary(v => v.Key, v => v.Value) :
+                httpContext.Request.Query.Where(v => !excluding.Contains(v.Key)).ToDictionary(v => v.Key, v => v.Value);
+
+        return parameters;
+    }
 
         public bool IsAuthenticated(AuthenticateResult authenticateResult, OpenIddictRequest request)
         {
@@ -56,10 +57,10 @@ namespace AuthProject
             {
                 destinations.Add(OpenIddictConstants.Destinations.AccessToken);
 
-                if (identity.HasScope(OpenIddictConstants.Scopes.OpenId))
-                {
-                    destinations.Add(OpenIddictConstants.Destinations.IdentityToken);
-                }
+                //if (identity.HasScope(OpenIddictConstants.Scopes.OpenId))
+                //{
+                //    destinations.Add(OpenIddictConstants.Destinations.IdentityToken);
+                //}
             }
 
             return destinations;
