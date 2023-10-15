@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using AuthProject;
+using AuthorizationServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.Tokens;
 using static OpenIddict.Abstractions.OpenIddictConstants;
@@ -84,6 +84,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<ClientSeeder>();
 builder.Services.AddTransient<AuthorizationService>();
+builder.Services.AddSingleton(provider => //RabbitMQPublisher registrations
+{
+    return new RabbitMQPublisher("localhost", "user_signup");
+});
 
 builder.Services.AddSwaggerGen();
 

@@ -5,7 +5,7 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 using System.Linq;
 using System.Security.Claims;
 
-namespace AuthProject
+namespace AuthorizationServer
 {
     public class AuthorizationService
     {
@@ -39,7 +39,7 @@ namespace AuthProject
                 }
             }
 
-            // RabbitMQ
+            // RabbitMQ -> if every sign-in is intended to be logged
             return true;
         }
 

@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthProject", "AuthProject\AuthProject.csproj", "{1ADC117D-B574-49D6-B3A5-715ED2DA8B75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthorizationServer", "AuthProject\AuthorizationServer.csproj", "{1ADC117D-B574-49D6-B3A5-715ED2DA8B75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResourceServer", "ResourceServer\ResourceServer.csproj", "{A378234A-CBF2-4A1E-8C1F-C929C2C7320A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResourceServer", "ResourceServer\ResourceServer.csproj", "{A378234A-CBF2-4A1E-8C1F-C929C2C7320A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonitoringService", "MonitoringService\MonitoringService.csproj", "{AB7FB434-CA63-475D-B3F6-2E32FC7BC764}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{A378234A-CBF2-4A1E-8C1F-C929C2C7320A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A378234A-CBF2-4A1E-8C1F-C929C2C7320A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A378234A-CBF2-4A1E-8C1F-C929C2C7320A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB7FB434-CA63-475D-B3F6-2E32FC7BC764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB7FB434-CA63-475D-B3F6-2E32FC7BC764}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB7FB434-CA63-475D-B3F6-2E32FC7BC764}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB7FB434-CA63-475D-B3F6-2E32FC7BC764}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

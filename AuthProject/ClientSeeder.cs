@@ -1,7 +1,7 @@
 ﻿using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
-namespace AuthProject
+namespace AuthorizationServer
 {
     public class ClientSeeder
     {

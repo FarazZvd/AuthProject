@@ -1,4 +1,4 @@
-﻿namespace AuthProject
+﻿namespace AuthorizationServer
 {
     public class Consts
     {

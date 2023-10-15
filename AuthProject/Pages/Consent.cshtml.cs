@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OpenIddict.Abstractions;
 
-namespace AuthProject.Pages
+namespace AuthorizationServer.Pages
 {
     public class ConsentModel : PageModel
     {
@@ -26,15 +26,14 @@ namespace AuthProject.Pages
 
             var consentClaim = User.GetClaim(Consts.ConsentNaming);
 
-            if (string.IsNullOrEmpty(consentClaim)) // New User => Sign up event => send via RabbitMQ to be loggged on console
+            if (string.IsNullOrEmpty(consentClaim)) // New User (hasn't granted or denied access before) => Sign up event => send via RabbitMQ to be loggged on console
             {
                 User.SetClaim(Consts.ConsentNaming, grant);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, User);
-                
-                // log consentClaim
 
+                // log consentClaim
             }
-            
+
             return Redirect(ReturnUrl);
         }
     }

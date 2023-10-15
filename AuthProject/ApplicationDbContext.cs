@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace AuthProject
+namespace AuthorizationServer
 {
     public class ApplicationDbContext : DbContext
     {

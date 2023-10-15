@@ -9,10 +9,8 @@ using static OpenIddict.Abstractions.OpenIddictConstants;
 using System.Security.Claims;
 using System.Web;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 
-namespace AuthProject.Controllers
+namespace AuthorizationServer.Controllers
 {
     [ApiController]
     public class AuthorizationController : Controller
@@ -21,15 +19,18 @@ namespace AuthProject.Controllers
         private readonly IOpenIddictScopeManager _scopeManager;
         //private readonly IOpenIddictAuthorizationManager _authorizationManager;
         private readonly AuthorizationService _authorizationService;
+        private readonly RabbitMQPublisher _rabbitMQPublisher;
 
         public AuthorizationController(
             IOpenIddictApplicationManager applicationManager,
             IOpenIddictScopeManager scopeManager,
-            AuthorizationService authorizationService)
+            AuthorizationService authorizationService,
+            RabbitMQPublisher rabbitMQPublisher)
         {
             _applicationManager = applicationManager;
             _scopeManager = scopeManager;
             _authorizationService = authorizationService;
+            _rabbitMQPublisher = rabbitMQPublisher;
         }
 
         [HttpGet("~/connect/authorize")]
@@ -90,11 +91,10 @@ namespace AuthProject.Controllers
                 return Redirect(consentRedirectUrl);
             }
 
-            // Token issuing
-            
+
             var userId = result.Principal.FindFirst(ClaimTypes.Email)!.Value;
 
-            // Logging could happen here too through RabbitMQ?
+            // Token issuing
             // Create the claims-based indentity that will be used by OpenIddict to generate tokens.
             var identity = new ClaimsIdentity(
                 authenticationType: TokenValidationParameters.DefaultAuthenticationType,
@@ -110,6 +110,11 @@ namespace AuthProject.Controllers
             identity.SetScopes(request.GetScopes());
             identity.SetResources(await _scopeManager.ListResourcesAsync(identity.GetScopes()).ToListAsync());
             identity.SetDestinations(c => AuthorizationService.GetDestinations(identity, c));
+
+            // Send to MonitoringService
+            var userInfo = new { Email = userId, Code = User.GetClaim(Claims.AccessTokenHash)};
+            var userInfoJson = Newtonsoft.Json.JsonConvert.SerializeObject(userInfo);
+            _rabbitMQPublisher.Publish(userInfoJson, "user_signup_queue");
 
             return SignIn(new ClaimsPrincipal(identity), OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }

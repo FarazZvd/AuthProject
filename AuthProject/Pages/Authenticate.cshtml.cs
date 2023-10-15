@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 
-namespace AuthProject.Pages
+namespace AuthorizationServer.Pages
 {
     public class AuthenticateModel : PageModel
     {
